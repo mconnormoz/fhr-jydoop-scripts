@@ -1,3 +1,4 @@
+
 # Copyright 2013 The Mozilla Foundation <http://www.mozilla.org/>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,15 +20,10 @@ from healthreportutils import (
     setupjob,
 )
 
-
 @FHRMapper()
 
 def map(key, payload, context):
     channel = payload.channel
-
-    for day, session in payload.session_start_times():
-      context.write("sessions", 1)
-      if session[2] > 600000:
-        context.write("outliers", 1)
-
-combine = reduce = jydoop.sumreducer
+    bookmarks, places = payload.latest_places_counts
+    context.write(key, '\t'.join((channel, 'bookmarks', str(bookmarks or 0))))
+    context.write(key, '\t'.join((channel, 'places', str(places or 0))))

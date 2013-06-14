@@ -19,15 +19,37 @@ from healthreportutils import (
     setupjob,
 )
 
-
 @FHRMapper()
 
 def map(key, payload, context):
     channel = payload.channel
+    os = payload.os
+    os_ver = payload.os_version
+    cpu = payload.cpu_arch
+    cpu_cores = str(payload.cpu_cores)
+    mem = payload.memory
+    if mem == "NaN":
+        return
 
-    for day, session in payload.session_start_times():
-      context.write("sessions", 1)
-      if session[2] > 600000:
-        context.write("outliers", 1)
+    if mem >= 32768:
+        mem = 32768
+    elif mem >= 16384:
+        mem = 16384
+    elif mem >= 8192:
+        mem = 8192
+    elif mem >= 4096:
+        mem = 4096
+    elif mem >= 2048:
+        mem = 2048
+    elif mem >= 1024:
+        mem = 1024
+    elif mem >= 512:
+        mem = 512
+    else:
+        mem = 256
+
+    memStr = str(mem)
+
+    context.write('\t'.join((channel, cpu, cpu_cores, memStr, os, os_ver)), 1)
 
 combine = reduce = jydoop.sumreducer
