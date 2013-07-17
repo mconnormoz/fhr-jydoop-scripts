@@ -23,11 +23,28 @@ from healthreportutils import (
 @FHRMapper()
 
 def map(key, payload, context):
-    channel = payload.channel
+  locale = payload.locale
+  channel = payload.channel
+  addons = payload.addons()
+  hasSocial = "no"
+  for addon in addons:
+    if addon == "_v":
+      continue;
+    if addons[addon]["type"] == "service":
+      hasSocial = "yes"
+      break
 
-    for day, session in payload.session_start_times():
-      context.write("sessions", 1)
-      if session[2] > 600000:
-        context.write("outliers", 1)
+  sessionCount = sessionActive = 0
+  for day, session in payload.session_times():
+    if day < "2013-06-15" or day > "2013-06-21":
+      continue
+
+    sessionCount += 1
+    sessionActive += session.active_ticks
+
+  bucket = "-".join([channel, locale, hasSocial])
+  context.write("\t".join([bucket, "activeSeconds"]), sessionActive * 5)
+  context.write("\t".join([bucket, "count"]), sessionCount)
+  context.write("\t".join([bucket, "users"]), 1)
 
 combine = reduce = jydoop.sumreducer
